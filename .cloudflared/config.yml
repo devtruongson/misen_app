@@ -1,0 +1,7 @@
+tunnel: a9ffcc13-07b4-4b4b-bde9-f637fd77273e
+credentials-file: a9ffcc13-07b4-4b4b-bde9-f637fd77273e.json
+
+ingress:
+  - hostname: shopify-dev-misen.fstack.io.vn
+    service: http://localhost:6868
+  - service: http_status:404

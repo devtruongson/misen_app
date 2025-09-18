@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Field Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CodeMirror for JSON editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/lint/lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/lint/json-lint.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/lint/lint.min.css">
+    <style>
+        .CodeMirror {
+            height: auto;
+            min-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 0.375rem;
+        }
+        .preview-html {
+            border: 1px solid #ddd;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            background-color: white;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="container mx-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold text-slate-800">
+                <a href="/" class="hover:underline">Template Field Manager</a>
+            </h1>
+            <div class="flex gap-2">
+                <button id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md shadow-sm transition">Save Changes</button>
+                <button id="pushShopifyBtn" class="bg-pink-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow-sm transition">PUSH SHOPIFY</button>
+                <button id="previewBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow-sm transition">Preview Template</button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Template Selection -->
+            <div class="col-span-1 bg-white rounded-lg shadow-sm p-4">
+                <h2 class="text-xl font-semibold mb-4 text-slate-800">Templates</h2>
+                <div id="templateList" class="space-y-2">
+                    <!-- Templates will be populated here -->
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button id="newTemplateBtn" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded-md shadow-sm transition">+ New Template</button>
+                    <button id="deleteTemplateBtn" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md shadow-sm transition" title="Delete Current Template">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Field Manager -->
+            <div class="col-span-1 lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <h2 class="text-xl font-semibold mb-2 text-slate-800">Template Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Template Title</label>
+                            <input type="text" id="templateTitle" class="w-full px-3 py-2 border border-slate-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+                            <input type="text" id="templateSku" class="w-full px-3 py-2 border border-slate-300 rounded-md">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">AI Prompt</label>
+                        <textarea id="aiPrompt" rows="4" class="w-full px-3 py-2 border border-slate-300 rounded-md min-h-[400px]"></textarea>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-slate-800">Fields</h2>
+                        <button id="addFieldBtn" class="bg-slate-800 hover:bg-slate-900 text-white py-1 px-3 text-sm rounded-md shadow-sm transition">+ Add Field</button>
+                    </div>
+                    <div id="fieldsList" class="space-y-4">
+                        <!-- Fields will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- JSON Editor Modal -->
+        <div id="jsonEditorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Edit JSON</h3>
+                    <button id="closeJsonEditorBtn" class="text-slate-500 hover:text-slate-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="jsonEditor"></div>
+                <div class="flex justify-end mt-4">
+                    <button id="applyJsonChangesBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md shadow-sm transition">Apply Changes</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Modal -->
+        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Template Preview</h3>
+                    <button id="closePreviewBtn" class="text-slate-500 hover:text-slate-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="previewContent" class="preview-html">
+                    <!-- Preview content will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Template data
+        let templatesData = [];
+        let currentTemplateIndex = -1;
+        let jsonEditor;
+        
+        // Load templates data
+        async function loadTemplatesData() {
+            try {
+                const response = await fetch('/api/api/templates');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                templatesData = await response.json();
+                renderTemplateList();
+                
+                if (templatesData.length > 0) {
+                    selectTemplate(0);
+                }
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+                // For demo, load sample data
+                templatesData = [
+                    {
+                        "key": "gsports_outdoors_wireless_cellular_trail_camera_fields",
+                        "title": "Gsports Outdoors Wireless Cellular Trail Camera",
+                        "sku": "LP00526",
+                        "ai_prompt": "Generate compelling marketing copy and automatically create all necessary form fields for TrailVision PRO X50...",
+                        "fields": [
+                            {
+                                "key": "LP00526_user_active",
+                                "label": "User Active",
+                                "name": "user_active",
+                                "type": "textarea",
+                                "required": 1,
+                                "value": "<div class='flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm'> <div class='flex -space-x-2'> <span class='inline-block w-2 h-2 bg-green-500 rounded-full'></span> <span class='inline-block w-2 h-2 bg-green-500 rounded-full'></span> <span class='inline-block w-2 h-2 bg-green-500 rounded-full'></span> </div> <span class='text-sm font-medium text-slate-700'>2,847 Active Users</span> </div>"
+                            },
+                            // Additional fields would be here
+                        ]
+                    }
+                ];
+                renderTemplateList();
+                selectTemplate(0);
+            }
+        }
+        
+        // Render template list
+        function renderTemplateList() {
+            const templateListElement = document.getElementById('templateList');
+            templateListElement.innerHTML = '';
+            
+            templatesData.forEach((template, index) => {
+                const templateItem = document.createElement('button');
+                templateItem.className = `w-full text-left p-3 rounded-md transition ${
+                    index === currentTemplateIndex ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50'
+                }`;
+                templateItem.innerHTML = `
+                    <div class="font-medium text-slate-800">${template.title}</div>
+                    <div class="text-xs text-slate-500">SKU: ${template.sku}</div>
+                `;
+                templateItem.addEventListener('click', () => selectTemplate(index));
+                templateListElement.appendChild(templateItem);
+            });
+        }
+        
+        // Select a template to edit
+        function selectTemplate(index) {
+            currentTemplateIndex = index;
+            const template = templatesData[index];
+            
+            document.getElementById('templateTitle').value = template.title || '';
+            document.getElementById('templateSku').value = template.sku || '';
+            document.getElementById('aiPrompt').value = template.ai_prompt || '';
+            
+            renderFieldsList(template.fields);
+            renderTemplateList();
+        }
+        
+        // Render fields list
+        function renderFieldsList(fields) {
+            const fieldsListElement = document.getElementById('fieldsList');
+            fieldsListElement.innerHTML = '';
+            
+            if (!fields || fields.length === 0) {
+                fieldsListElement.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        No fields added yet. Click "Add Field" to create your first field.
+                    </div>
+                `;
+                return;
+            }
+            
+            fields.forEach((field, index) => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'border border-slate-200 rounded-md';
+                
+                fieldItem.innerHTML = `
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-medium text-slate-800">${field.label}</h3>
+                                <div class="text-xs text-slate-500">Key: ${field.key}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700">${field.type}</span>
+                                <button class="edit-field-btn text-blue-600 hover:text-blue-800" data-index="${index}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20h9"></path>
+                                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                    </svg>
+                                </button>
+                                <button class="delete-field-btn text-red-600 hover:text-red-800" data-index="${index}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded p-2 text-sm text-slate-700 overflow-hidden text-ellipsis">
+                            ${field.default_value ? field.default_value.substring(0, 100) + (field.default_value.length > 100 ? '...' : '') : 'No default value'}
+                        </div>
+                    </div>
+                `;
+                
+                fieldsListElement.appendChild(fieldItem);
+                
+                // Add event listeners to buttons
+                fieldItem.querySelector('.edit-field-btn').addEventListener('click', () => editField(index));
+                fieldItem.querySelector('.delete-field-btn').addEventListener('click', () => deleteField(index));
+            });
+        }
+        
+        // Edit field
+        function editField(index) {
+            const template = templatesData[currentTemplateIndex];
+            const field = template.fields[index];
+            openJsonEditor(field, (updatedField) => {
+                template.fields[index] = updatedField;
+                renderFieldsList(template.fields);
+            });
+        }
+        
+        // Delete field
+        async function deleteField(index) {
+            if (confirm('Are you sure you want to delete this field?')) {
+                try {
+                    const template = templatesData[currentTemplateIndex];
+                    template.fields.splice(index, 1);
+                    
+                    // Update the template on the server
+                    const response = await fetch(`/api/api/templates/${currentTemplateIndex}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(template)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    renderFieldsList(template.fields);
+                } catch (error) {
+                    console.error('Error deleting field:', error);
+                    alert(`Failed to delete field: ${error.message}`);
+                }
+            }
+        }
+        
+        // Add new field
+        function addNewField() {
+            const template = templatesData[currentTemplateIndex];
+            const sku = template.sku;
+            
+            const newField = {
+                key: `${sku}_new_field_${Date.now()}`,
+                label: "New Field",
+                name: "new_field",
+                type: "text",
+                required: 0,
+                default_value: ""
+            };
+            
+            openJsonEditor(newField, (updatedField) => {
+                template.fields.push(updatedField);
+                renderFieldsList(template.fields);
+            });
+        }
+        
+        // Open JSON editor
+        function openJsonEditor(data, callback) {
+            document.getElementById('jsonEditorModal').classList.remove('hidden');
+            
+            if (!jsonEditor) {
+                jsonEditor = CodeMirror(document.getElementById('jsonEditor'), {
+                    mode: { name: "javascript", json: true },
+                    lineNumbers: true,
+                    matchBrackets: true,
+                    autoCloseBrackets: true,
+                    theme: "default",
+                    gutters: ["CodeMirror-lint-markers"],
+                    lint: true
+                });
+            }
+            
+            jsonEditor.setValue(JSON.stringify(data, null, 2));
+            
+            document.getElementById('applyJsonChangesBtn').onclick = () => {
+                try {
+                    const updatedData = JSON.parse(jsonEditor.getValue());
+                    callback(updatedData);
+                    document.getElementById('jsonEditorModal').classList.add('hidden');
+                } catch (e) {
+                    alert('Invalid JSON: ' + e.message);
+                }
+            };
+        }
+        
+        // Preview template
+        function previewTemplate() {
+            document.getElementById('previewModal').classList.remove('hidden');
+            const template = templatesData[currentTemplateIndex];
+            
+            let previewHtml = `
+                <h1 class="text-2xl font-bold mb-4">${template.title}</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            `;
+            
+            template.fields.forEach(field => {
+                let fieldPreview = '';
+                
+                if (field.type === 'textarea' && (field.default_value || field.value)) {
+                    const content = field.default_value || field.value;
+                    fieldPreview = `
+                        <div class="mb-6">
+                            <h3 class="font-bold text-lg mb-2">${field.label}</h3>
+                            <div class="bg-slate-50 p-4 rounded">
+                                ${content}
+                            </div>
+                        </div>
+                    `;
+                } else if (field.type === 'file' && field.default_value) {
+                    fieldPreview = `
+                        <div class="mb-6">
+                            <h3 class="font-bold text-lg mb-2">${field.label}</h3>
+                            <img src="${field.default_value}" alt="${field.label}" class="max-w-full h-auto rounded-lg shadow-sm">
+                        </div>
+                    `;
+                } else {
+                    fieldPreview = `
+                        <div class="mb-6">
+                            <h3 class="font-bold text-lg mb-2">${field.label}</h3>
+                            <div class="bg-slate-50 p-4 rounded">
+                                ${field.default_value || 'No preview available'}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                previewHtml += fieldPreview;
+            });
+            
+            previewHtml += `</div>`;
+            document.getElementById('previewContent').innerHTML = previewHtml;
+        }
+        
+        // Save template changes
+        async function saveTemplateChanges() {
+            try {
+                const template = templatesData[currentTemplateIndex];
+                
+                template.title = document.getElementById('templateTitle').value;
+                template.sku = document.getElementById('templateSku').value;
+                template.ai_prompt = document.getElementById('aiPrompt').value;
+                
+                // Update field keys if SKU changed
+                if (template.sku !== templatesData[currentTemplateIndex].sku) {
+                    const oldSku = templatesData[currentTemplateIndex].sku;
+                    const newSku = template.sku;
+                    
+                    template.fields.forEach(field => {
+                        if (field.key.startsWith(`${oldSku}_`)) {
+                            field.key = field.key.replace(`${oldSku}_`, `${newSku}_`);
+                        }
+                    });
+                }
+                
+                // Save to the server
+                const response = await fetch(`/api/api/templates/${currentTemplateIndex}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(template)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                alert('Changes saved successfully!');
+                renderTemplateList();
+            } catch (error) {
+                console.error('Error saving template:', error);
+                alert(`Failed to save changes: ${error.message}`);
+            }
+        }
+        
+        // Create a new template
+        async function createNewTemplate() {
+            try {
+                const newTemplate = {
+                    key: `template_${Date.now()}`,
+                    title: "New Template",
+                    sku: "NEW001",
+                    ai_prompt: "Generate content for new template...",
+                    fields: []
+                };
+                
+                // Save to the server
+                const response = await fetch('/apiapi/templates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newTemplate)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                templatesData.push(newTemplate);
+                renderTemplateList();
+                selectTemplate(templatesData.length - 1);
+            } catch (error) {
+                console.error('Error creating template:', error);
+                alert(`Failed to create template: ${error.message}`);
+            }
+        }
+        
+        // Delete current template
+        async function deleteCurrentTemplate() {
+            if (currentTemplateIndex < 0 || !templatesData.length) {
+                alert('No template selected');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete template "${templatesData[currentTemplateIndex].title}"?`)) {
+                return;
+            }
+            
+            try {
+                // Delete from the server
+                const response = await fetch(`/api/api/templates/${currentTemplateIndex}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Remove from local data
+                templatesData.splice(currentTemplateIndex, 1);
+                
+                // Update UI
+                if (templatesData.length > 0) {
+                    selectTemplate(Math.min(currentTemplateIndex, templatesData.length - 1));
+                } else {
+                    currentTemplateIndex = -1;
+                    document.getElementById('templateTitle').value = '';
+                    document.getElementById('templateSku').value = '';
+                    document.getElementById('aiPrompt').value = '';
+                    renderFieldsList([]);
+                }
+                
+                renderTemplateList();
+                alert('Template deleted successfully');
+            } catch (error) {
+                console.error('Error deleting template:', error);
+                alert(`Failed to delete template: ${error.message}`);
+            }
+        }
+
+
+        const handlePushShopify = () => {
+            const SKU = document.getElementById('templateSku').value;
+            if(!SKU) return;
+            fetch("/api/webhook/push?sku=" +SKU)
+                .then(response => response.json())
+                .then(data => {
+                    alert("Shopify update triggered successfully!");
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Failed to trigger Shopify update.");
+                });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load templates
+            loadTemplatesData();
+            
+            // Event listeners
+            document.getElementById('addFieldBtn').addEventListener('click', addNewField);
+            document.getElementById('saveBtn').addEventListener('click', saveTemplateChanges);
+            document.getElementById('previewBtn').addEventListener('click', previewTemplate);
+            document.getElementById('newTemplateBtn').addEventListener('click', createNewTemplate);
+            document.getElementById('deleteTemplateBtn').addEventListener('click', deleteCurrentTemplate);
+            document.getElementById('closeJsonEditorBtn').addEventListener('click', () => {
+                document.getElementById('jsonEditorModal').classList.add('hidden');
+            });
+            document.getElementById('closePreviewBtn').addEventListener('click', () => {
+                document.getElementById('previewModal').classList.add('hidden');
+            });
+            document.getElementById('pushShopifyBtn').addEventListener('click',handlePushShopify);
+        });
+    </script>
+</body>
+</html>

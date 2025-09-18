@@ -1,0 +1,5 @@
+{
+  "CF_SECRET_KEY": "Q7o4pODsvNUl6rpPXFHFNUKxes0jTyykWpuVm2MOaGo=",
+  "CF_ACCOUNT_TAG": "c57dfc09adc92ed214582203b923ea79",
+  "CF_HOST_PATTERN": "^shopify-dev-[a-zA-Z0-9-]+\\.fstack\\.io\\.vn$"
+}
