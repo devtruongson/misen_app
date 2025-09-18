@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { join } from 'path';
 import { TemplateManagerService } from './template-manager.service';
 
-@Controller('api/templates')
+@Controller('templates')
 export class TemplateManagerController {
   constructor(private readonly templateManagerService: TemplateManagerService) {}
 

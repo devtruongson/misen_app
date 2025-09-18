@@ -56,7 +56,9 @@ export class WebhookService {
                                 }
                             })
                         );
+                        metafields[key] = JSON.stringify(metafields[key]);
                     }
+                    console.log("checkmeta: ", metaFieldData);
 
                     this.handleUpdateMetafield({
                         key: key,
@@ -84,11 +86,11 @@ export class WebhookService {
         newValue: string,
         productId: string,
         nameSpace: string,
-        type: string
+        type: string,
     }) {
         try {
             const res = await updateProductMetafieldViaSet(productId, nameSpace, key, type, newValue);
-            
+            return res
         } catch (error) {
             console.log("check errror: ", error);
         }
