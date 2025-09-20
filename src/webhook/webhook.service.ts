@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import getMetafield from 'src/utils/getMetaField';
 import updateProductMetafieldViaSet from 'src/utils/updateMetaField';
 import uploadFileToShopify from 'src/utils/uploadFileToShopify';
 
@@ -20,55 +19,48 @@ export class WebhookService {
         if (!productId) {
             throw new BadRequestException('Missing product ID');
         }
-        
+
         try {
             for(const key in metafields) {
-                const metaFieldData = await getMetafield(`gid://shopify/Product/${productId}`, key);
-                if(metaFieldData.product && metaFieldData.product.metafield) {
-                    if(metafields[key]?.type === "image" && metafields[key]?.url?.startsWith("data:image/jpeg;base64")) {
-                       const resFile = await uploadFileToShopify(
-                            `${key}_${Date.now()}.jpeg`,
-                            "image/jpeg",
-                            Buffer.from(metafields[key].url.split(",")[1], "base64"),
-                            true
-                        );
-                        if(resFile) {
-                            metafields[key] = resFile;
-                        }
+                if(metafields[key]?.type === "image" && metafields[key]?.url?.startsWith("data:image/jpeg;base64")) {
+                    const resFile = await uploadFileToShopify(
+                        `${key}_${Date.now()}.jpeg`,
+                        "image/jpeg",
+                        Buffer.from(metafields[key].url.split(",")[1], "base64"),
+                    );
+                    if(resFile) {
+                        metafields[key] = resFile;
                     }
+                }
 
-                    console.log(Array.isArray(metafields[key]))
-
-                    if(Array.isArray(metafields[key])) {
-                        metafields[key] = await Promise.all(
-                            metafields[key].map(async (item) => {
-                                if(item?.type === "image" && item?.url?.startsWith("data:image/jpeg;base64")) {
-                                    const resFile = await uploadFileToShopify(
-                                        `${key}_${Date.now()}.jpeg`,
-                                        "image/jpeg",
-                                        Buffer.from(item.url.split(",")[1], "base64")
-                                    );
-                                    if(resFile) {
-                                        return resFile;
-                                    }
-                                } else {
-                                    return item.url;
+                if(Array.isArray(metafields[key])) {
+                    metafields[key] = await Promise.all(
+                        metafields[key].map(async (item) => {
+                            if(item?.type === "image" && item?.url?.startsWith("data:image/jpeg;base64")) {
+                                const resFile = await uploadFileToShopify(
+                                    `${key}_${Date.now()}.jpeg`,
+                                    "image/jpeg",
+                                    Buffer.from(item.url.split(",")[1], "base64")
+                                );
+                                if(resFile) {
+                                    return resFile;
                                 }
-                            })
-                        );
-                        metafields[key] = JSON.stringify(metafields[key]);
-                    }
-                    console.log("checkmeta: ", metaFieldData);
-
-                    this.handleUpdateMetafield({
-                        key: key,
-                        newValue: metafields[key],
-                        productId: metaFieldData.product.id,
-                        nameSpace: "custom",
-                        type: metaFieldData.product.metafield.type
-                    });
+                            } else {
+                                return item.url;
+                            }
+                        })
+                    );
+                    metafields[key] = JSON.stringify(metafields[key]);
                 }
             }
+
+            this.handleUpdateMetafield({
+                key: "template_data",
+                newValue: JSON.stringify(metafields),
+                productId: `gid://shopify/Product/${productId}`,
+                nameSpace: "custom",
+                type: "json_string"
+            });
         } catch (error) {
             console.error('Error fetching metafield:', error);
             throw new BadRequestException(`Failed to update product metafields: ${error.message}`);
@@ -90,6 +82,7 @@ export class WebhookService {
     }) {
         try {
             const res = await updateProductMetafieldViaSet(productId, nameSpace, key, type, newValue);
+            console.log("check res: ", res)
             return res
         } catch (error) {
             console.log("check errror: ", error);
