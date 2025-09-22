@@ -10,7 +10,8 @@ export default async function uploadFileToShopify(
   fileName: string,
   mimeType: string,
   buffer: Buffer,
-  isId = false
+  isId = false,
+  domain: string
 ) {
   // B1: xin staged upload URL
   const stagedUploadOp = `
@@ -46,6 +47,7 @@ export default async function uploadFileToShopify(
       ],
        }
     },
+    domain
   });
 
   const target = data.stagedUploadsCreate.stagedTargets[0];
@@ -95,12 +97,13 @@ export default async function uploadFileToShopify(
       ],
         }
     },
+    domain
   });
 
   const uploadedFile = fileData.fileCreate.files[0];
   const fileId = uploadedFile?.id;
   if (!fileId) throw new Error("Upload thành công nhưng không lấy được URL");
   if(isId) return fileId;
-  const res = await getFileShopifyUrlById(fileId)
+  const res = await getFileShopifyUrlById(fileId, 5, 1000, domain)
   return res;
 }

@@ -1,16 +1,31 @@
 import { createAdminApiClient } from '@shopify/admin-api-client';
+import { ShopifyConfigService } from '../services/shopify-config.service';
+
 const { API_VERSION } = process.env;
 
 type graphqlQuery = {
     operation: string,
-    variables?: object | undefined
+    variables?: object | undefined,
+    domain: string
 }
 
-const graphqlQuery = async ({  operation, variables }: graphqlQuery) => {
+let shopifyConfigService: ShopifyConfigService;
+
+export const setShopifyConfigService = (service: ShopifyConfigService) => {
+    shopifyConfigService = service;
+};
+
+const graphqlQuery = async ({  operation, variables, domain }: graphqlQuery) => {
+    if (!shopifyConfigService) {
+        throw new Error('ShopifyConfigService not initialized');
+    }
+
+    const config = await shopifyConfigService.getActiveConfig(domain);
+
     const client = createAdminApiClient({
-        storeDomain: 'misen-developer.myshopify.com',
-        apiVersion: '2025-07',
-        accessToken: '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',
+        storeDomain: config.storeDomain,
+        apiVersion: config.apiVersion,
+        accessToken: config.accessToken,
     });
 
     const { data, errors } = await client.request(operation, variables);

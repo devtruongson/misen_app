@@ -1,6 +1,6 @@
 import graphqlQuery from "./graphqlQuery";
 
-export async function getFileShopifyUrlById(fileId: string, maxRetries = 5, retryDelay = 1000) {
+export async function getFileShopifyUrlById(fileId: string, maxRetries = 5, retryDelay = 1000, domain: string) {
     // Input validation
     if (!fileId) {
         throw new Error('Missing required parameter: fileId is required');
@@ -42,7 +42,8 @@ export async function getFileShopifyUrlById(fileId: string, maxRetries = 5, retr
     while (retries < maxRetries) {
         const response = await graphqlQuery({
             operation,
-            variables
+            variables,
+            domain
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as { data: any; errors?: { message: string }[] };
 

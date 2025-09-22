@@ -1,6 +1,6 @@
 import graphqlQuery from "./graphqlQuery";
 
-export default async function getMetafield(productId: string, key: string) {
+export default async function getMetafield(productId: string, key: string, domain: string) {
     const operation = `query getProductMetafield($productId: ID!) {
         product(id: $productId) {
             id
@@ -18,7 +18,8 @@ export default async function getMetafield(productId: string, key: string) {
         operation,
         variables: {
             variables: { productId }
-        }
+        },
+        domain
     });
     return data;
 }

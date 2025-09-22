@@ -5,7 +5,8 @@ export default async function updateProductMetafieldViaSet(
   namespace: string,
   key: string,
   type: string,
-  value: string
+  value: string,
+  domain: string
 ) {
   const operation = `
     mutation updateMetafields(
@@ -43,7 +44,8 @@ export default async function updateProductMetafieldViaSet(
     operation,
     variables: {
       variables: { ownerId, namespace, key, type, value }
-    }
+    },
+    domain
   });
 
   return data;

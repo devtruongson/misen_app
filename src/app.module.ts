@@ -2,10 +2,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AppInitService } from './services/app-init.service';
+import { ShopifyConfigModule } from './shopify-config/shopify-config.module';
 import { TemplateManagerModule } from './template-manager/template-manager.module';
 import { WebhookModule } from './webhook/webhook.module';
 
@@ -18,10 +21,12 @@ import { WebhookModule } from './webhook/webhook.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/misen_app'),
+    ShopifyConfigModule,
     WebhookModule,
     TemplateManagerModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppInitService],
 })
 export class AppModule {}
