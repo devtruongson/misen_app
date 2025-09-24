@@ -9,22 +9,20 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppInitService } from './services/app-init.service';
 import { ShopifyConfigModule } from './shopify-config/shopify-config.module';
-import { TemplateManagerModule } from './template-manager/template-manager.module';
 import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api*', '/api/(.*)'],
-    }),
+        rootPath: join(__dirname, '..', 'public'),
+        exclude: ['/api*', '/api/(.*)'],
+      }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/misen_app'),
     ShopifyConfigModule,
     WebhookModule,
-    TemplateManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppInitService],

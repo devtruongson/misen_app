@@ -32,6 +32,7 @@
     "@nestjs/serve-static": "^5.0.3",
     "@shopify/admin-api-client": "^1.1.1",
     "@shopify/shopify-api": "^11.14.1",
+    "axios": "^1.12.2",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "mongoose": "^8.18.1",
