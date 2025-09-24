@@ -49,7 +49,7 @@ export class WebhookService {
                 if(Array.isArray(metafields[key])) {
                     metafields[key] = await Promise.all(
                         metafields[key].map(async (item) => {
-                            if(item?.type === "image" && item?.url?.startsWith("data:image/jpeg;base64")) {
+                            if(item?.type === "image" && (item?.url?.startsWith("data:image/jpeg;base64") || item?.url?.startsWith("data:image/webp"))) {
                                 const resFile = await uploadFileToShopify(
                                     `${key}_${Date.now()}.jpeg`,
                                     "image/jpeg",
